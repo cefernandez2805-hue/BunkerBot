@@ -1,9 +1,10 @@
+import asyncio
 import os
 import threading
 import discord
 from flask import Flask
 
-# Servidor web simple para que Render mantenga el puerto abierto y activo
+# Servidor web simple para mantener el servicio activo en Render
 app = Flask("")
 
 
@@ -17,25 +18,56 @@ def run_web():
   app.run(host="0.0.0.0", port=port)
 
 
-# Configuración del bot de Discord con intents de miembros habilitados
+# Configuración del bot con intents habilitados (incluyendo miembros y reacciones)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 client = discord.Client(intents=intents)
+
+# Diccionario que conecta cada emoji de bandera con el nombre exacto del rol creado
+COUNTRY_ROLES = {
+    "🇨🇴": "Colombia",
+    "🇲🇽": "México",
+    "🇪🇸": "España",
+    "🇻🇪": "Venezuela",
+    "🇵🇷": "Puerto Rico",
+    "🇪🇨": "Ecuador",
+    "🇦🇷": "Argentina",
+    "🇨🇱": "Chile",
+    "🇧🇴": "Bolivia",
+    "🇬🇹": "Guatemala",
+    "🇸🇻": "El Salvador",
+    "🇭🇳": "Honduras",
+    "🇳🇮": "Nicaragua",
+    "🇨🇷": "Costa Rica",
+    "🇵🇦": "Panamá",
+    "🇨🇺": "Cuba",
+    "🇩🇴": "República Dominicana",
+    "🇵🇪": "Perú",
+    "🇵🇾": "Paraguay",
+    "🇺🇾": "Uruguay",
+}
+
+AUTOROLE_CHANNEL_ID = 1557197785684508733
 
 
 @client.event
 async def on_ready():
   print(f"¡BunkerBot se ha conectado con éxito como {client.user}!")
 
-  # ID del canal de información #📁┃ informacion
+  # 1. Canal de información de roles
   INFO_CHANNEL_ID = 1557188730853531718
-  channel = client.get_channel(INFO_CHANNEL_ID)
+  info_channel = client.get_channel(INFO_CHANNEL_ID)
 
-  if channel:
-    embed = discord.Embed(
-        title="🛡️┃ Información de Roles",
-        description="""**Roles de Nivel**
+  if info_channel:
+    messages = [m async for m in info_channel.history(limit=5)]
+    if not any(
+        m.author == client.user and "Información de Roles" in str(m.embeds)
+        for m in messages
+    ):
+      embed_info = discord.Embed(
+          title="🛡️┃ Información de Roles",
+          description="""**Roles de Nivel**
 En este apartado podrás encontrar la información de los roles del servidor que se te otorgan mediante vas subiendo de nivel (siendo activo en el chat), junto a los beneficios que estos llevan. Si tienes alguna duda extra puedes abrir un ticket en el canal de <#1557200977457709129>
 El bot de nivelación que se utiliza es <@437808476106784770>, el prefijo que se utiliza es /, para poder ver tu nivel solo usa /rank en el canal de <#1557199769854812240>
 
@@ -52,12 +84,108 @@ Beneficios que adquieres al boostear el servidor, reclámalos en <#1557200977457
 > ・Enviar multimedia por todos los canales del servidor.
 > ・Subir 5 niveles en el servidor.
 > ・Participar en <#1557566930511073380>""",
-        color=0xFFB300,
-    )
-    await channel.send(embed=embed)
-    print("¡Mensaje de información de roles enviado con éxito!")
-  else:
-    print("No se pudo encontrar el canal de información. Revisa el ID.")
+          color=0xFFB300,
+      )
+      await info_channel.send(embed=embed_info)
+      print("¡Mensaje de información de roles enviado!")
+
+  # 2. Canal de Autoroles (con el emoji 🍁 y las reacciones de banderas automáticas)
+  autorole_channel = client.get_channel(AUTOROLE_CHANNEL_ID)
+
+  if autorole_channel:
+    messages = [m async for m in autorole_channel.history(limit=5)]
+    autorole_msg = None
+    for m in messages:
+      if m.author == client.user and m.embeds and "ELIGE TU PAÍS" in m.embeds[0].title:
+        autorole_msg = m
+        break
+
+    if not autorole_msg:
+      embed_autoroles = discord.Embed(
+          title="🦝 │ ¡ELIGE TU PAÍS!",
+          description=(
+              "🍁 │ **REACCIONA A ESTE MENSAJE CON LA BANDERA DE TU PAÍS**\n\n"
+              "1. Solo se puede seleccionar un país.\n"
+              "2. Si te equivocas y tienes que cambiar de país; primero **quita"
+              " la reacción** y luego vuelve a reaccionar al país que deseas.\n"
+              "3. Evita usar todos los emojis y así evitas bugs. Y listo,"
+              " **disfruta del server con tu nuevo rol!** 🧑‍💻"
+          ),
+          color=0xFFB300,
+      )
+      embed_autoroles.set_footer(
+          text=(
+              "En caso tengas dudas o reportes con algún bug, no dudes en abrir"
+              " un ticket."
+          )
+      )
+
+      autorole_msg = await autorole_channel.send(embed=embed_autoroles)
+      print("¡Mensaje de autoroles enviado con éxito!")
+
+      # Añadir automáticamente todas las reacciones de las banderas
+      for emoji in COUNTRY_ROLES.keys():
+        try:
+          await autorole_msg.add_reaction(emoji)
+          await asyncio.sleep(
+              0.4
+          )  # Pausa breve para evitar bloqueos por velocidad en Discord
+        except Exception as e:
+          print(f"No se pudo añadir la reacción {emoji}: {e}")
+
+
+# Evento cuando un usuario añade una reacción para obtener su rol de país
+@client.event
+async def on_raw_reaction_add(payload):
+  if payload.channel_id != AUTOROLE_CHANNEL_ID:
+    return
+  if payload.member and payload.member.bot:
+    return
+
+  emoji_str = str(payload.emoji)
+  if emoji_str in COUNTRY_ROLES:
+    role_name = COUNTRY_ROLES[emoji_str]
+    guild = client.get_guild(payload.guild_id)
+    if guild:
+      # Busca el rol por su nombre exacto o si incluye el emoji
+      role = discord.utils.get(guild.roles, name=role_name)
+      if not role:
+        role = discord.utils.get(guild.roles, name=f"{emoji_str} {role_name}")
+
+      if role and payload.member:
+        try:
+          await payload.member.add_roles(role)
+          print(f"¡Rol {role.name} asignado a {payload.member.name}!")
+        except Exception as e:
+          print(
+              f"Error al asignar el rol (recuerda poner el rol del bot arriba"
+              f" de los países): {e}"
+          )
+
+
+# Evento cuando un usuario quita su reacción para quitarle el rol
+@client.event
+async def on_raw_reaction_remove(payload):
+  if payload.channel_id != AUTOROLE_CHANNEL_ID:
+    return
+
+  emoji_str = str(payload.emoji)
+  if emoji_str in COUNTRY_ROLES:
+    role_name = COUNTRY_ROLES[emoji_str]
+    guild = client.get_guild(payload.guild_id)
+    if guild:
+      member = guild.get_member(payload.user_id)
+      if member and not member.bot:
+        role = discord.utils.get(guild.roles, name=role_name)
+        if not role:
+          role = discord.utils.get(guild.roles, name=f"{emoji_str} {role_name}")
+
+        if role:
+          try:
+            await member.remove_roles(role)
+            print(f"¡Rol {role.name} removido de {member.name}!")
+          except Exception as e:
+            print(f"Error al remover el rol: {e}")
 
 
 # Evento automático cuando banean a un usuario
@@ -101,8 +229,8 @@ async def on_member_ban(guild, user):
     print(f"¡Alerta de baneo enviada para {user.name}!")
 
 
-# Iniciar el servidor web en un hilo secundario para mantener el servicio activo en Render
+# Iniciar el servidor web en un hilo secundario
 threading.Thread(target=run_web).start()
 
-# Iniciar el bot usando de forma segura la variable de entorno TOKEN
+# Iniciar el bot de Discord
 client.run(os.environ["TOKEN"])
