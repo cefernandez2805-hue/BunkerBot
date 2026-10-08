@@ -27,57 +27,38 @@ client = discord.Client(intents=intents)
 async def on_ready():
   print(f"¡BunkerBot se ha conectado con éxito como {client.user}!")
 
-  # Canal de reglas configurado
-  CHANNEL_ID = 1557187229133181060
+  # ID del canal de información #📁┃ informacion
+  INFO_CHANNEL_ID = 1557188730853531718
 
-  channel = client.get_channel(CHANNEL_ID)
+  channel = client.get_channel(INFO_CHANNEL_ID)
 
   if channel:
     embed = discord.Embed(
-        title="REGLAS DE EL BUNKER",
-        description="""🔹 - Información Básica
-> Es importante hacer énfasis que el servidor cuenta con un ambiente y humor bastante característico de nuestra comunidad en El Bunker, por lo tanto el staff del servidor aplica sanciones de acuerdo a una evaluación y contexto de cualquier situación particular.
-> 
-🔹 - Respeto
-> ・El servidor cuenta con una forma de ser y humor que puede rozar la falta de respeto, sin embargo, una falta de respeto no consensuada, cualquier tipo de amenaza, acoso, toxicidad, difamación, discriminación de cualquier tipo entre otros hacia un usuario no está permitido y se sancionará de manera correspondiente.
-> ・No esta permitido acosar a nadie usando la foto de perfil o enviando fotos privadas de los usuarios, en caso de hacerlo se procederá con una sanción respectiva.
-> 
-🔹 - Spam/Flood/Scam
-> ・No se permite ningún tipo de Spam/Flood/Scam en el servidor.
-> ・Se considera Spam cualquier tipo de promoción ya sea de una red social o link para la promoción del mismo que no este relacionado con el servidor, también aplica si se le hace por MD a un usuario.
-> ・Se considera Flood la repetición de más de 5 veces un mensaje en el servidor, ya sea un emote o texto.
-> ・Se considera Scam cualquier tipo de estafa (Esta da una sanción permanente sin posibilidad de apelación)
-> 
-🔹 - Contenido NSFW +18
-> ・Esta totalmente prohibido enviar cualquier tipo de contenido multimedia de carácter NSFW +18, obsceno o gore, en caso de hacerlo será baneo permanente sin posibilidad de apelación. También aplica ponerse de perfil fotos de este mismo carácter.
-> 
-🔹 - Roles
-> ・No esta permitido exigir roles o rangos en el servidor, para ser staff se avisará previamente mediante <#1557188533171519588> si se abren las postulaciones. Todos los roles y rangos del servidor cumplen una función pre-establecida, es importante respetar cada uno de los permisos.
-> 
-🔹 - Staff
-> ・ Es importante respetar al staff del servidor, no solo porque son los que mantienen la sana convivencia en el mismo, sino porque son los que tienen la autoridad y hacen que la comunidad cada vez crezca más.
-> 
-🔹 - Identidad
-> ・ Cualquier tipo de suplantación de Identidad ya sea de broma o no resultará en baneo permanente del servidor.
-> ・Se entiende como suplantación en nuestro servidor el uso de multicuentas y aún más si son usadas para evadir sanciones.
-> ・También esta prohibido hacerse pasar por otro genero, independiente si la situación es de carácter humorística o no.
-> 
-🔹 - Menciones/Tags
-> ・Prohibido hacer mención o tag de cualquier miembro del staff sin autorización. Los únicos usuarios que tienen la potestad de hacerlo son los moderadores y administradores del servidor.
-> 
-🔹 - Bots
-> ・No utilizar de manera incorrecta los bots del servidor, cada uno cumple con una función, y algunos tienen su propio canal de uso.
-> 
-🔹 - Transmisiones y Eventos
-> ・Durante las transmisiones en vivo de partidos de fútbol, UFC, boxeo, básquetbol o películas en El Estadio, se prohíbe el spam masivo y la toxicidad excesiva que arruine la experiencia de los demás.
-> ・Queda estrictamente prohibido compartir enlaces maliciosos o retransmitir contenido ilegal no autorizado en los canales de voz o de escenario.
-> ・Mantener el orden en la Pantalla Gigante y respetar turnos cuando se habilite la participación de la comunidad.""",
+        title="🛡️┃ Información de Roles",
+        description="""**Roles de Nivel**
+En este apartado podrás encontrar la información de los roles del servidor que se te otorgan mediante vas subiendo de nivel (siendo activo en el chat), junto a los beneficios que estos llevan. Si tienes alguna duda extra puedes abrir un ticket en el canal de <#1557200977457709129>
+El bot de nivelación que se utiliza es <@437808476106784770>, el prefijo que se utiliza es /, para poder ver tu nivel solo usa /rank en el canal de <#1557199455537729546>
+
+🔹 **Nivel 10**
+> ・Podrás enviar imágenes por <#1557199455537729546>
+
+🔹 **Nivel 100**
+> ・Tendrás acceso a un canal de texto y voz privados (VIP)
+
+**Booster**
+Beneficios que adquieres al boostear el servidor, reclámalos en <#1557200977457709129>
+> ・Color personalizados VIP o normal.
+> ・Canal de texto y voz privado.
+> ・Income diario en el casino del servidor.
+> ・Enviar multimedia por todos los canales del servidor.
+> ・Subir 5 niveles en el servidor.
+> ・Participar en sorteos exclusivos como subs al canal de West u otros en <#1557566930511073380>""",
         color=0xFFB300,
     )
     await channel.send(embed=embed)
-    print("¡Mensaje de reglas enviado con éxito!")
+    print("¡Mensaje de información de roles enviado con éxito!")
   else:
-    print("No se pudo encontrar el canal. Revisa el ID.")
+    print("No se pudo encontrar el canal de información. Revisa el ID.")
 
 
 # Iniciar el servidor web en un hilo secundario para Render
