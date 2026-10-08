@@ -17,9 +17,10 @@ def run_web():
   app.run(host="0.0.0.0", port=port)
 
 
-# Configuración del bot de Discord
+# Configuración del bot de Discord con intents de miembros habilitados
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 client = discord.Client(intents=intents)
 
 
@@ -58,6 +59,42 @@ Beneficios que adquieres al boostear el servidor, reclámalos en <#1557200977457
     print("¡Mensaje de información de roles enviado con éxito!")
   else:
     print("No se pudo encontrar el canal de información. Revisa el ID.")
+
+
+# Evento automático cuando banean a un usuario
+@client.event
+async def on_member_ban(guild, user):
+  # ID del canal de registros de baneo
+  BAN_CHANNEL_ID = 1557188976916307968
+  channel = client.get_channel(BAN_CHANNEL_ID)
+
+  if channel:
+    # Obtener el tiempo de creación de la cuenta en formato relativo de Discord (ej. "hace 2 años")
+    created_timestamp = int(user.created_at.timestamp())
+
+    embed = discord.Embed(
+        title="🚫 Usuario Baneado",
+        description=f"**{user.name}** ha sido baneado del servidor",
+        color=0xFF0000,
+    )
+    embed.add_field(
+        name="👤 Usuario", value=f"<@{user.id}>\n{user.name}", inline=False
+    )
+    embed.add_field(name="🆔 ID", value=f"`{user.id}`", inline=False)
+    embed.add_field(
+        name="📅 Cuenta creada", value=f"<t:{created_timestamp}:R>", inline=False
+    )
+    embed.add_field(
+        name="📜 Recordatorio",
+        value="Recuerda leer las reglas del servidor en <#1557187229133181060>",
+        inline=False,
+    )
+
+    if user.avatar:
+      embed.set_thumbnail(url=user.avatar.url)
+
+    await channel.send(embed=embed)
+    print(f"¡Alerta de baneo enviada para {user.name}!")
 
 
 # Iniciar el servidor web en un hilo secundario para Render
