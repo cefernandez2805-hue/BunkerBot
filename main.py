@@ -49,10 +49,9 @@ El bot de nivelación que se utiliza es <@437808476106784770>, el prefijo que se
 Beneficios que adquieres al boostear el servidor, reclámalos en <#1557200977457709129>
 > ・Color personalizados VIP o normal.
 > ・Canal de texto y voz privado.
-> ・Income diario en el casino del servidor.
 > ・Enviar multimedia por todos los canales del servidor.
 > ・Subir 5 niveles en el servidor.
-> ・Participar en sorteos exclusivos como subs al canal de West u otros en <#1557566930511073380>""",
+> ・Participar en <#1557566930511073380>""",
         color=0xFFB300,
     )
     await channel.send(embed=embed)
