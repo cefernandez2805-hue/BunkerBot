@@ -1,3 +1,4 @@
+
 import asyncio
 import os
 import threading
@@ -18,10 +19,11 @@ def run_web():
   app.run(host="0.0.0.0", port=port)
 
 
-# Configuración del bot con intents habilitados (incluyendo miembros y reacciones)
+# Configuración del bot con intents habilitados (incluyendo reacciones y miembros)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
+intents.reactions = True
 client = discord.Client(intents=intents)
 
 # Diccionario que conecta cada emoji de bandera con el nombre exacto del rol creado
@@ -127,9 +129,7 @@ Beneficios que adquieres al boostear el servidor, reclámalos en <#1557200977457
       for emoji in COUNTRY_ROLES.keys():
         try:
           await autorole_msg.add_reaction(emoji)
-          await asyncio.sleep(
-              0.4
-          )  # Pausa breve para evitar bloqueos por velocidad en Discord
+          await asyncio.sleep(0.4)
         except Exception as e:
           print(f"No se pudo añadir la reacción {emoji}: {e}")
 
@@ -139,7 +139,7 @@ Beneficios que adquieres al boostear el servidor, reclámalos en <#1557200977457
 async def on_raw_reaction_add(payload):
   if payload.channel_id != AUTOROLE_CHANNEL_ID:
     return
-  if payload.member and payload.member.bot:
+  if payload.user_id == client.user.id:
     return
 
   emoji_str = str(payload.emoji)
@@ -147,19 +147,31 @@ async def on_raw_reaction_add(payload):
     role_name = COUNTRY_ROLES[emoji_str]
     guild = client.get_guild(payload.guild_id)
     if guild:
-      # Busca el rol por su nombre exacto o si incluye el emoji
+      # Obtener el miembro de forma segura (forzando la búsqueda si no está en caché)
+      member = guild.get_member(payload.user_id)
+      if not member:
+        try:
+          member = await guild.fetch_member(payload.user_id)
+        except Exception as e:
+          print(f"No se pudo obtener el miembro: {e}")
+          return
+
+      if member.bot:
+        return
+
+      # Busca el rol por su nombre exacto o con el emoji incluido
       role = discord.utils.get(guild.roles, name=role_name)
       if not role:
         role = discord.utils.get(guild.roles, name=f"{emoji_str} {role_name}")
 
-      if role and payload.member:
+      if role:
         try:
-          await payload.member.add_roles(role)
-          print(f"¡Rol {role.name} asignado a {payload.member.name}!")
+          await member.add_roles(role)
+          print(f"¡Rol {role.name} asignado a {member.name}!")
         except Exception as e:
           print(
-              f"Error al asignar el rol (recuerda poner el rol del bot arriba"
-              f" de los países): {e}"
+              f"Error al asignar el rol (revisa que el rol del bot esté arriba"
+              f" de los países y tenga permisos): {e}"
           )
 
 
@@ -168,6 +180,8 @@ async def on_raw_reaction_add(payload):
 async def on_raw_reaction_remove(payload):
   if payload.channel_id != AUTOROLE_CHANNEL_ID:
     return
+  if payload.user_id == client.user.id:
+    return
 
   emoji_str = str(payload.emoji)
   if emoji_str in COUNTRY_ROLES:
@@ -175,17 +189,26 @@ async def on_raw_reaction_remove(payload):
     guild = client.get_guild(payload.guild_id)
     if guild:
       member = guild.get_member(payload.user_id)
-      if member and not member.bot:
-        role = discord.utils.get(guild.roles, name=role_name)
-        if not role:
-          role = discord.utils.get(guild.roles, name=f"{emoji_str} {role_name}")
+      if not member:
+        try:
+          member = await guild.fetch_member(payload.user_id)
+        except Exception as e:
+          print(f"No se pudo obtener el miembro: {e}")
+          return
 
-        if role:
-          try:
-            await member.remove_roles(role)
-            print(f"¡Rol {role.name} removido de {member.name}!")
-          except Exception as e:
-            print(f"Error al remover el rol: {e}")
+      if member.bot:
+        return
+
+      role = discord.utils.get(guild.roles, name=role_name)
+      if not role:
+        role = discord.utils.get(guild.roles, name=f"{emoji_str} {role_name}")
+
+      if role:
+        try:
+          await member.remove_roles(role)
+          print(f"¡Rol {role.name} removido de {member.name}!")
+        except Exception as e:
+          print(f"Error al remover el rol: {e}")
 
 
 # Evento automático cuando banean a un usuario
