@@ -1,5 +1,21 @@
 import os
+import threading
 import discord
+from flask import Flask
+
+# Servidor web simple para que Render mantenga el puerto abierto y activo
+app = Flask("")
+
+
+@app.route("/")
+def home():
+  return "¡BunkerBot está en línea y funcionando!"
+
+
+def run_web():
+  port = int(os.environ.get("PORT", 8080))
+  app.run(host="0.0.0.0", port=port)
+
 
 # Configuración del bot de Discord con intents de miembros habilitados
 intents = discord.Intents.default()
@@ -85,5 +101,8 @@ async def on_member_ban(guild, user):
     print(f"¡Alerta de baneo enviada para {user.name}!")
 
 
-# Iniciar el bot de forma segura con el TOKEN
+# Iniciar el servidor web en un hilo secundario para mantener el servicio activo en Render
+threading.Thread(target=run_web).start()
+
+# Iniciar el bot usando de forma segura la variable de entorno TOKEN
 client.run(os.environ["TOKEN"])
