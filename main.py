@@ -37,7 +37,7 @@ async def on_ready():
         title="🛡️┃ Información de Roles",
         description="""**Roles de Nivel**
 En este apartado podrás encontrar la información de los roles del servidor que se te otorgan mediante vas subiendo de nivel (siendo activo en el chat), junto a los beneficios que estos llevan. Si tienes alguna duda extra puedes abrir un ticket en el canal de <#1557200977457709129>
-El bot de nivelación que se utiliza es <@437808476106784770>, el prefijo que se utiliza es /, para poder ver tu nivel solo usa /rank en el canal de <#1557199455537729546>
+El bot de nivelación que se utiliza es <@437808476106784770>, el prefijo que se utiliza es /, para poder ver tu nivel solo usa /rank en el canal de <#1557199769854812240>
 
 🔹 **Nivel 10**
 > ・Podrás enviar imágenes por <#1557199455537729546>
