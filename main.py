@@ -1,21 +1,5 @@
 import os
-import threading
 import discord
-from flask import Flask
-
-# Servidor web simple para que Render mantenga el servicio activo
-app = Flask("")
-
-
-@app.route("/")
-def home():
-  return "¡BunkerBot está en línea y funcionando!"
-
-
-def run_web():
-  port = int(os.environ.get("PORT", 8080))
-  app.run(host="0.0.0.0", port=port)
-
 
 # Configuración del bot de Discord con intents de miembros habilitados
 intents = discord.Intents.default()
@@ -30,7 +14,6 @@ async def on_ready():
 
   # ID del canal de información #📁┃ informacion
   INFO_CHANNEL_ID = 1557188730853531718
-
   channel = client.get_channel(INFO_CHANNEL_ID)
 
   if channel:
@@ -64,12 +47,17 @@ Beneficios que adquieres al boostear el servidor, reclámalos en <#1557200977457
 # Evento automático cuando banean a un usuario
 @client.event
 async def on_member_ban(guild, user):
-  # ID del canal de registros de baneo
   BAN_CHANNEL_ID = 1557188976916307968
-  channel = client.get_channel(BAN_CHANNEL_ID)
+  channel = guild.get_channel(BAN_CHANNEL_ID)
+
+  if not channel:
+    try:
+      channel = await client.fetch_channel(BAN_CHANNEL_ID)
+    except Exception as e:
+      print(f"No se pudo obtener el canal de baneo: {e}")
+      return
 
   if channel:
-    # Obtener el tiempo de creación de la cuenta en formato relativo de Discord (ej. "hace 2 años")
     created_timestamp = int(user.created_at.timestamp())
 
     embed = discord.Embed(
@@ -97,8 +85,5 @@ async def on_member_ban(guild, user):
     print(f"¡Alerta de baneo enviada para {user.name}!")
 
 
-# Iniciar el servidor web en un hilo secundario para Render
-threading.Thread(target=run_web).start()
-
-# Iniciar el bot usando de forma segura la variable de entorno TOKEN
+# Iniciar el bot de forma segura con el TOKEN
 client.run(os.environ["TOKEN"])
