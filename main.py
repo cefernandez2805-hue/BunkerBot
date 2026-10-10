@@ -25,7 +25,7 @@ intents.members = True
 intents.reactions = True
 client = discord.Client(intents=intents)
 
-# Diccionario que conecta cada emoji de bandera con el nombre exacto del rol creado
+# Diccionario que conecta cada emoji de bandera con el nombre del país
 COUNTRY_ROLES = {
     "🇨🇴": "Colombia",
     "🇲🇽": "México",
@@ -143,10 +143,9 @@ async def on_raw_reaction_add(payload):
 
   emoji_str = str(payload.emoji)
   if emoji_str in COUNTRY_ROLES:
-    role_name = COUNTRY_ROLES[emoji_str]
+    country_name = COUNTRY_ROLES[emoji_str]
     guild = client.get_guild(payload.guild_id)
     if guild:
-      # Obtener el miembro de forma segura (forzando la búsqueda si no está en caché)
       member = guild.get_member(payload.user_id)
       if not member:
         try:
@@ -158,10 +157,12 @@ async def on_raw_reaction_add(payload):
       if member.bot:
         return
 
-      # Busca el rol por su nombre exacto o con el emoji incluido
-      role = discord.utils.get(guild.roles, name=role_name)
-      if not role:
-        role = discord.utils.get(guild.roles, name=f"{emoji_str} {role_name}")
+      # Busca el rol probando el formato con barra | , sin barra, o solo el nombre
+      role = (
+          discord.utils.get(guild.roles, name=f"{emoji_str} | {country_name}")
+          or discord.utils.get(guild.roles, name=f"{emoji_str} {country_name}")
+          or discord.utils.get(guild.roles, name=country_name)
+      )
 
       if role:
         try:
@@ -169,9 +170,12 @@ async def on_raw_reaction_add(payload):
           print(f"¡Rol {role.name} asignado a {member.name}!")
         except Exception as e:
           print(
-              f"Error al asignar el rol (revisa que el rol del bot esté arriba"
-              f" de los países y tenga permisos): {e}"
+              f"Error al asignar el rol (asegúrate de que el rol del bot esté"
+              f" arriba de los países y tenga permisos de Administrador o"
+              f" Gestionar roles): {e}"
           )
+      else:
+        print(f"No se encontró el rol para {country_name}")
 
 
 # Evento cuando un usuario quita su reacción para quitarle el rol
@@ -184,7 +188,7 @@ async def on_raw_reaction_remove(payload):
 
   emoji_str = str(payload.emoji)
   if emoji_str in COUNTRY_ROLES:
-    role_name = COUNTRY_ROLES[emoji_str]
+    country_name = COUNTRY_ROLES[emoji_str]
     guild = client.get_guild(payload.guild_id)
     if guild:
       member = guild.get_member(payload.user_id)
@@ -198,9 +202,11 @@ async def on_raw_reaction_remove(payload):
       if member.bot:
         return
 
-      role = discord.utils.get(guild.roles, name=role_name)
-      if not role:
-        role = discord.utils.get(guild.roles, name=f"{emoji_str} {role_name}")
+      role = (
+          discord.utils.get(guild.roles, name=f"{emoji_str} | {country_name}")
+          or discord.utils.get(guild.roles, name=f"{emoji_str} {country_name}")
+          or discord.utils.get(guild.roles, name=country_name)
+      )
 
       if role:
         try:
